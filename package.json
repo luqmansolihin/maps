@@ -1,0 +1,23 @@
+{
+    "name": "google-maps-clone",
+    "version": "1.0.0",
+    "description": "Proyek Peta Interaktif Modern mirip Google Maps berbasis JavaScript",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview"
+    },
+    "devDependencies": {
+        "vite": "^5.4.2"
+    },
+    "keywords": [
+        "google-maps",
+        "leaflet",
+        "javascript",
+        "maps",
+        "openstreetmap",
+        "osrm"
+    ],
+    "author": "Luqman Solihin",
+    "license": "MIT"
+}

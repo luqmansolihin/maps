@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="id">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>Peta Web Modern - Google Maps Clone</title>
+        <meta
+            name="description"
+            content="Aplikasi web peta interaktif mandiri mirip Google Maps menggunakan JavaScript murni dan Leaflet.js" />
+
+        <!-- Leaflet CSS -->
+        <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+        <!-- Stylesheets -->
+        <link
+            rel="stylesheet"
+            href="css/style.css" />
+        <link
+            rel="stylesheet"
+            href="css/components.css" />
+        <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23EA4335'><path d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z'/></svg>" />
+    </head>
+    <body>
+        <div id="app">
+            <!-- Peta Leaflet Utama -->
+            <div id="map"></div>
+
+            <!-- 1. Floating Search Bar -->
+            <div
+                id="search-container"
+                class="search-container">
+                <button
+                    id="search-menu-btn"
+                    class="icon-btn"
+                    title="Buka Menu & Tempat Tersimpan">
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="22"
+                        height="22"
+                        fill="currentColor">
+                        <path
+                            d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z" />
+                    </svg>
+                </button>
+
+                <input
+                    type="text"
+                    id="search-input"
+                    class="search-input"
+                    placeholder="Cari di Peta..."
+                    autocomplete="off" />
+
+                <button
+                    id="search-clear-btn"
+                    class="icon-btn"
+                    style="display: none"
+                    title="Hapus Pencarian">
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="20"
+                        height="20"
+                        fill="currentColor">
+                        <path
+                            d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                    </svg>
+                </button>
+
+                <div class="search-divider"></div>
+
+                <button
+                    id="search-directions-btn"
+                    class="icon-btn directions-trigger-btn"
+                    title="Petunjuk Arah & Rute">
+                    <!-- Ikon Rute Biru Khas Google Maps -->
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="24"
+                        height="24"
+                        fill="currentColor">
+                        <path
+                            d="M21.71 11.29l-9-9a.996.996 0 0 0-1.41 0l-9 9a.996.996 0 0 0 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9a.996.996 0 0 0 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 2. Autocomplete Search Results Dropdown -->
+            <div
+                id="search-results"
+                class="search-results"></div>
+
+            <!-- 3. Directions / Routing Panel -->
+            <div
+                id="route-panel"
+                class="route-panel">
+                <div class="route-header">
+                    <div class="route-modes">
+                        <button
+                            class="route-mode-btn active"
+                            data-mode="driving"
+                            title="Mobil">
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="16"
+                                height="16"
+                                fill="currentColor">
+                                <path
+                                    d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z" />
+                            </svg>
+                            Mobil
+                        </button>
+                        <button
+                            class="route-mode-btn"
+                            data-mode="cycling"
+                            title="Sepeda">
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="16"
+                                height="16"
+                                fill="currentColor">
+                                <path
+                                    d="M15.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM5 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 8.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5zm5.8-10l2.4-2.4.8.8c1.3 1.3 3 2.1 5 2.1V9c-1.5 0-2.9-.6-3.9-1.6l-1.7-1.7c-.4-.4-.9-.7-1.4-.7s-1 .3-1.4.7L7.8 8.4C7.3 8.9 7 9.5 7 10.2V15h2v-4.2l1.8-1.8zM19 12c-2.8 0-5 2.2-5 5s2.2 5 5 5 5-2.2 5-5-2.2-5-5-5zm0 8.5c-1.9 0-3.5-1.6-3.5-3.5s1.6-3.5 3.5-3.5 3.5 1.6 3.5 3.5-1.6 3.5-3.5 3.5z" />
+                            </svg>
+                            Sepeda
+                        </button>
+                        <button
+                            class="route-mode-btn"
+                            data-mode="walking"
+                            title="Pejalan Kaki">
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="16"
+                                height="16"
+                                fill="currentColor">
+                                <path
+                                    d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z" />
+                            </svg>
+                            Jalan
+                        </button>
+                    </div>
+                    <button
+                        id="route-close-btn"
+                        class="icon-btn"
+                        title="Tutup Rute">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            fill="currentColor">
+                            <path
+                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="route-inputs-container">
+                    <div class="route-dots-column">
+                        <div
+                            class="dot-origin"
+                            title="Titik Asal"></div>
+                        <div class="dots-connector"></div>
+                        <div
+                            class="dot-destination"
+                            title="Titik Tujuan"></div>
+                    </div>
+
+                    <div class="route-inputs">
+                        <div class="route-input-wrapper">
+                            <input
+                                type="text"
+                                id="route-origin-input"
+                                placeholder="Pilih titik awal..."
+                                autocomplete="off" />
+                            <button
+                                id="origin-my-location-btn"
+                                class="input-action-btn"
+                                title="Gunakan Lokasi Saat Ini">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    width="18"
+                                    height="18"
+                                    fill="currentColor">
+                                    <path
+                                        d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div class="route-input-wrapper">
+                            <input
+                                type="text"
+                                id="route-dest-input"
+                                placeholder="Pilih tujuan..."
+                                autocomplete="off" />
+                        </div>
+                    </div>
+
+                    <button
+                        id="route-swap-btn"
+                        class="route-swap-btn"
+                        title="Tukar Titik Awal & Tujuan">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            fill="currentColor">
+                            <path
+                                d="M16 17.01V10h-2v7.01h-3L15 21l4-3.99h-3zM9 3L5 6.99h3V14h2V6.99h3L9 3z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="route-body">
+                    <div
+                        id="route-loading"
+                        class="route-loading"
+                        style="display: none">
+                        <div class="spinner"></div>
+                        <span>Menghitung rute tercepat...</span>
+                    </div>
+
+                    <div
+                        id="route-error"
+                        class="route-error"></div>
+
+                    <div
+                        id="route-summary"
+                        class="route-summary"
+                        style="display: none">
+                        <div class="route-headline">
+                            <span
+                                id="route-duration"
+                                class="route-duration"
+                                >0 mnt</span
+                            >
+                            <span
+                                id="route-distance"
+                                class="route-distance"
+                                >(0 km)</span
+                            >
+                        </div>
+                        <div class="route-subtext">
+                            Rute tercepat berdasarkan kondisi lalu lintas saat
+                            ini
+                        </div>
+                    </div>
+
+                    <div class="route-steps-title">
+                        Petunjuk Langkah demi Langkah
+                    </div>
+                    <ul
+                        id="route-steps-list"
+                        class="route-steps-list"></ul>
+                </div>
+            </div>
+
+            <!-- 4. Place Details Card -->
+            <div
+                id="place-card"
+                class="place-card">
+                <div class="place-card-header">
+                    <div class="place-card-title-group">
+                        <h2
+                            id="place-title"
+                            class="place-title">
+                            Nama Tempat
+                        </h2>
+                        <p
+                            id="place-address"
+                            class="place-address">
+                            Alamat lengkap akan muncul di sini
+                        </p>
+                        <div
+                            id="place-coords"
+                            class="place-coords">
+                            0.000000, 0.000000
+                        </div>
+                    </div>
+                    <button
+                        id="place-card-close"
+                        class="icon-btn"
+                        title="Tutup">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="18"
+                            height="18"
+                            fill="currentColor">
+                            <path
+                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="place-actions">
+                    <button
+                        id="place-directions-btn"
+                        class="place-action-btn primary"
+                        title="Cari Rute ke Sini">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="16"
+                            height="16"
+                            fill="currentColor">
+                            <path
+                                d="M21.71 11.29l-9-9a.996.996 0 0 0-1.41 0l-9 9a.996.996 0 0 0 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9a.996.996 0 0 0 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z" />
+                        </svg>
+                        <span>Rute</span>
+                    </button>
+
+                    <button
+                        id="place-save-btn"
+                        class="place-action-btn"
+                        title="Simpan ke Favorit">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="16"
+                            height="16"
+                            stroke="currentColor"
+                            fill="none"
+                            stroke-width="2">
+                            <path
+                                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                        </svg>
+                        <span>Simpan</span>
+                    </button>
+
+                    <button
+                        id="place-copy-coords-btn"
+                        class="place-action-btn"
+                        title="Salin Koordinat">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="16"
+                            height="16"
+                            fill="currentColor">
+                            <path
+                                d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" />
+                        </svg>
+                        <span>Salin Koordinat</span>
+                    </button>
+
+                    <button
+                        id="place-share-btn"
+                        class="place-action-btn"
+                        title="Bagikan Lokasi">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="16"
+                            height="16"
+                            fill="currentColor">
+                            <path
+                                d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z" />
+                        </svg>
+                        <span>Bagikan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 5. Layer Switcher (Pojok Kiri Bawah) -->
+            <div
+                id="layer-switcher"
+                class="layer-switcher">
+                <button
+                    id="layer-toggle-btn"
+                    class="layer-toggle-btn"
+                    title="Ganti Tampilan Peta">
+                    <img
+                        id="current-layer-thumb"
+                        class="layer-thumb-img"
+                        src="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4260/6524"
+                        alt="Layer Thumbnail" />
+                    <div
+                        id="current-layer-label"
+                        class="layer-label">
+                        Satelit
+                    </div>
+                </button>
+
+                <div
+                    id="layer-menu"
+                    class="layer-menu">
+                    <div
+                        class="layer-option active"
+                        data-layer="streets">
+                        <div class="layer-option-icon">🗺️</div>
+                        <span>Jalan</span>
+                    </div>
+                    <div
+                        class="layer-option"
+                        data-layer="satellite">
+                        <div class="layer-option-icon">🛰️</div>
+                        <span>Satelit</span>
+                    </div>
+                    <div
+                        class="layer-option"
+                        data-layer="dark">
+                        <div class="layer-option-icon">🌙</div>
+                        <span>Gelap</span>
+                    </div>
+                    <div
+                        class="layer-option"
+                        data-layer="terrain">
+                        <div class="layer-option-icon">⛰️</div>
+                        <span>Topografi</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Floating Controls (Pojok Kanan Bawah) -->
+            <div class="floating-controls">
+                <button
+                    id="my-location-btn"
+                    class="circle-control-btn"
+                    title="Tampilkan Lokasi Saya">
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="22"
+                        height="22"
+                        fill="currentColor">
+                        <path
+                            d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3A8.994 8.994 0 0 0 13 3.06V1h-2v2.06A8.994 8.994 0 0 0 3.06 11H1v2h2.06A8.994 8.994 0 0 0 11 20.94V23h2v-2.06A8.994 8.994 0 0 0 20.94 13H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
+                    </svg>
+                </button>
+
+                <div class="controls-group">
+                    <button
+                        id="zoom-in-btn"
+                        class="control-btn"
+                        title="Perbesar">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            fill="currentColor">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                        </svg>
+                    </button>
+                    <button
+                        id="zoom-out-btn"
+                        class="control-btn"
+                        title="Perkecil">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            fill="currentColor">
+                            <path d="M19 13H5v-2h14v2z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <button
+                    id="reset-view-btn"
+                    class="circle-control-btn"
+                    title="Pusatkan Peta (Default)">
+                    <svg
+                        viewBox="0 0 24 24"
+                        width="20"
+                        height="20"
+                        fill="currentColor">
+                        <path
+                            d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 7. Sidebar Drawer & Tempat Tersimpan -->
+            <div
+                id="sidebar-backdrop"
+                class="sidebar-backdrop"></div>
+            <aside
+                id="sidebar-drawer"
+                class="sidebar-drawer">
+                <div class="sidebar-header">
+                    <div class="sidebar-brand">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="26"
+                            height="26"
+                            fill="#4285F4">
+                            <path
+                                d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
+                        </svg>
+                        <span>Peta Web JS</span>
+                    </div>
+                    <button
+                        id="sidebar-close-btn"
+                        class="icon-btn"
+                        title="Tutup Menu">
+                        <svg
+                            viewBox="0 0 24 24"
+                            width="20"
+                            height="20"
+                            fill="currentColor">
+                            <path
+                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="sidebar-content">
+                    <div class="sidebar-section-title">
+                        <span>Tempat Tersimpan (Favorit)</span>
+                        <button
+                            id="clear-saved-places-btn"
+                            class="sidebar-clear-btn">
+                            Hapus Semua
+                        </button>
+                    </div>
+                    <ul
+                        id="saved-places-list"
+                        class="saved-places-list"></ul>
+                </div>
+
+                <div class="sidebar-footer">
+                    Proyek Peta Interaktif &bull; JavaScript & Leaflet.js
+                </div>
+            </aside>
+        </div>
+
+        <!-- Leaflet JS -->
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <!-- Aplikasi Utama JS -->
+        <script
+            type="module"
+            src="js/app.js"></script>
+    </body>
+</html>
