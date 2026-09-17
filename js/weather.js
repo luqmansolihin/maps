@@ -130,6 +130,18 @@ export class WeatherManager {
                 admCode = "35.78.01.1001";
             } else if (textToCheck.includes("denpasar") || textToCheck.includes("bali")) {
                 admCode = "51.71.01.1001";
+            } else if (textToCheck.includes("solo") || textToCheck.includes("surakarta")) {
+                admCode = "33.72.01.1001";
+            } else if (textToCheck.includes("malang")) {
+                admCode = "35.73.01.1001";
+            } else if (textToCheck.includes("bogor")) {
+                admCode = "32.71.01.1001";
+            } else if (textToCheck.includes("medan")) {
+                admCode = "12.71.01.1001";
+            } else if (textToCheck.includes("palembang")) {
+                admCode = "16.71.01.1001";
+            } else if (textToCheck.includes("makassar")) {
+                admCode = "73.71.01.1001";
             }
         }
 
@@ -163,7 +175,7 @@ export class WeatherManager {
             let icon = meta.icon;
             let severity = meta.severity;
 
-            if ((code >= 51 && code <= 67) && precip < 0.5) {
+            if (((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) && precip < 0.5) {
                 if (clouds <= 40) {
                     label = "Cerah";
                     icon = "☀️";
@@ -177,10 +189,10 @@ export class WeatherManager {
                     icon = "⛅";
                     severity = "normal";
                 }
-            } else if (code === 3 && clouds <= 85 && precip === 0) {
-                // Di Indonesia, awan sedang tanpa hujan diklasifikasikan BMKG sebagai Cerah Berawan
-                label = "Cerah Berawan";
-                icon = "🌤️";
+            } else if (code === 3 && precip === 0) {
+                // Di Indonesia, awan tanpa hujan diklasifikasikan BMKG sebagai Cerah Berawan atau Berawan
+                label = clouds <= 85 ? "Cerah Berawan" : "Berawan";
+                icon = clouds <= 85 ? "🌤️" : "⛅";
             }
 
             const weatherData = {
