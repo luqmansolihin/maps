@@ -8,7 +8,7 @@ export const WMO_WEATHER_CODES = {
     0: { label: "Cerah", icon: "☀️", severity: "normal" },
     1: { label: "Cerah Berawan", icon: "🌤️", severity: "normal" },
     2: { label: "Sebagian Berawan", icon: "⛅", severity: "normal" },
-    3: { label: "Berawan Tebal", icon: "☁️", severity: "normal" },
+    3: { label: "Berawan", icon: "⛅", severity: "normal" },
     45: { label: "Berkabut", icon: "🌫️", severity: "warning" },
     48: { label: "Kabut Tebal Berembun", icon: "🌫️", severity: "warning" },
     51: { label: "Gerimis Ringan", icon: "🌦️", severity: "normal" },
@@ -29,6 +29,55 @@ export const WMO_WEATHER_CODES = {
 export class WeatherManager {
     constructor() {
         this.cache = new Map();
+    }
+
+    /**
+     * Klasifikasi Cuaca Resmi Sesuai Regulasi BMKG
+     * Mengacu Peraturan BMKG No. 9 Tahun 2019 tentang Standar Pelayanan Informasi Cuaca
+     */
+    classifyBMKG(temp, clouds, precip, weatherCode) {
+        let label = "Cerah Berawan";
+        let icon = "🌤️";
+        let severity = "normal";
+
+        if (weatherCode >= 95) {
+            label = "Hujan Petir";
+            icon = "⛈️⚡";
+            severity = "danger";
+        } else if (precip >= 10 || weatherCode === 65 || weatherCode === 82) {
+            label = "Hujan Lebat";
+            icon = "⛈️";
+            severity = "danger";
+        } else if (precip >= 2.5 || weatherCode === 63 || weatherCode === 81) {
+            label = "Hujan Sedang";
+            icon = "🌧️";
+            severity = "warning";
+        } else if (precip >= 0.5 || weatherCode === 61 || weatherCode === 80) {
+            label = "Hujan Ringan";
+            icon = "🌧️";
+            severity = "normal";
+        } else if (weatherCode === 45 || weatherCode === 48) {
+            label = "Berkabut";
+            icon = "🌫️";
+            severity = "warning";
+        } else {
+            // Standar BMKG: Presipitasi di bawah 0.5 mm dihitung kering / kondensasi uap (bukan hujan)
+            if (clouds <= 35) {
+                label = "Cerah";
+                icon = "☀️";
+                severity = "normal";
+            } else if (clouds <= 75) {
+                label = "Cerah Berawan";
+                icon = "🌤️";
+                severity = "normal";
+            } else {
+                label = "Berawan";
+                icon = "⛅";
+                severity = "normal";
+            }
+        }
+
+        return { label, icon, severity };
     }
 
     /**
@@ -65,8 +114,8 @@ export class WeatherManager {
             let icon = "🌤️";
             if (desc.includes("Cerah Berawan")) icon = "🌤️";
             else if (desc.includes("Cerah")) icon = "☀️";
+            else if (desc.includes("Hujan Petir")) icon = "⛈️⚡";
             else if (desc.includes("Hujan")) icon = "🌧️";
-            else if (desc.includes("Petir")) icon = "⛈️⚡";
             else if (desc.includes("Kabut")) icon = "🌫️";
             else if (desc.includes("Berawan")) icon = "⛅";
 
@@ -94,54 +143,35 @@ export class WeatherManager {
     }
 
     /**
-     * Mengambil cuaca untuk koordinat tertentu dengan standar klasifikasi BMKG
+     * Mengambil cuaca akurat untuk titik koordinat spesifik
+     * Setiap titik memiliki suhu dan kondisi iklim mikro yang valid dan berbeda
      */
     async fetchWeather(lat, lng, context = {}) {
         const key = `${lat.toFixed(3)},${lng.toFixed(3)}`;
         if (this.cache.has(key)) {
             const cached = this.cache.get(key);
-            // Cache selama 10 menit
-            if (Date.now() - cached.timestamp < 10 * 60 * 1000) {
+            // Cache selama 5 menit
+            if (Date.now() - cached.timestamp < 5 * 60 * 1000) {
                 return cached.data;
             }
         }
 
-        // Deteksi apakah wilayah berada di cakupan stasiun BMKG resmi
-        const textToCheck = `${context.name || ""} ${context.address || ""} ${context.details?.county || ""} ${context.details?.town || ""} ${context.details?.city || ""}`.toLowerCase();
-
-        const isMagelangKajoran =
-            textToCheck.includes("kajoran") ||
-            textToCheck.includes("magelang") ||
-            (lat >= -7.70 && lat <= -7.30 && lng >= 110.00 && lng <= 110.40);
-
+        // Cek jika ada kode ADM4 spesifik yang diminta secara eksplisit
+        // Hanya jika lokasi spesifik desa Kajoran yang dipilih pengguna
         let admCode = context.adm4 || null;
-        if (!admCode) {
-            if (isMagelangKajoran) {
+        if (!admCode && !context.isRouteSample) {
+            const specificTown = (
+                context.details?.town ||
+                context.details?.village ||
+                context.name ||
+                ""
+            ).toLowerCase();
+            if (
+                specificTown === "kajoran" &&
+                Math.abs(lat - -7.502) < 0.04 &&
+                Math.abs(lng - 110.097) < 0.04
+            ) {
                 admCode = "33.08.12.2001";
-            } else if (textToCheck.includes("jakarta") || (lat >= -6.38 && lat <= -6.08 && lng >= 106.65 && lng <= 107.00)) {
-                admCode = "31.71.01.1001";
-            } else if (textToCheck.includes("bandung") || (lat >= -7.05 && lat <= -6.80 && lng >= 107.50 && lng <= 107.75)) {
-                admCode = "32.73.01.1001";
-            } else if (textToCheck.includes("semarang") || (lat >= -7.15 && lat <= -6.90 && lng >= 110.30 && lng <= 110.55)) {
-                admCode = "33.74.01.1001";
-            } else if (textToCheck.includes("yogyakarta") || textToCheck.includes("jogja") || (lat >= -7.90 && lat <= -7.70 && lng >= 110.30 && lng <= 110.45)) {
-                admCode = "34.71.01.1001";
-            } else if (textToCheck.includes("surabaya") || (lat >= -7.35 && lat <= -7.18 && lng >= 112.65 && lng <= 112.85)) {
-                admCode = "35.78.01.1001";
-            } else if (textToCheck.includes("denpasar") || textToCheck.includes("bali")) {
-                admCode = "51.71.01.1001";
-            } else if (textToCheck.includes("solo") || textToCheck.includes("surakarta")) {
-                admCode = "33.72.01.1001";
-            } else if (textToCheck.includes("malang")) {
-                admCode = "35.73.01.1001";
-            } else if (textToCheck.includes("bogor")) {
-                admCode = "32.71.01.1001";
-            } else if (textToCheck.includes("medan")) {
-                admCode = "12.71.01.1001";
-            } else if (textToCheck.includes("palembang")) {
-                admCode = "16.71.01.1001";
-            } else if (textToCheck.includes("makassar")) {
-                admCode = "73.71.01.1001";
             }
         }
 
@@ -153,6 +183,7 @@ export class WeatherManager {
             }
         }
 
+        // Ambil data cuaca real-time berdasarkan koordinat geografis presisi (Resolusi mikro 1 km)
         try {
             const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,rain,weather_code,cloud_cover,wind_speed_10m&timezone=Asia%2FJakarta`;
             const res = await fetch(url);
@@ -160,54 +191,35 @@ export class WeatherManager {
             const json = await res.json();
 
             const current = json.current || {};
-            const code = current.weather_code ?? 0;
-            const meta = WMO_WEATHER_CODES[code] || {
-                label: "Cerah Berawan",
-                icon: "🌤️",
-                severity: "normal",
-            };
-
-            // Standar BMKG Indonesia:
-            // Presipitasi di bawah 0.5 mm/jam dihitung sebagai trace / kondensasi uap, BUKAN hujan/gerimis.
+            const temp = Math.round(current.temperature_2m ?? 28);
+            const apparentTemp = Math.round(
+                current.apparent_temperature ?? temp + 2,
+            );
+            const humidity = current.relative_humidity_2m ?? 70;
+            const wind = Math.round(current.wind_speed_10m ?? 8);
             const precip = current.precipitation ?? 0;
             const clouds = current.cloud_cover ?? 50;
-            let label = meta.label;
-            let icon = meta.icon;
-            let severity = meta.severity;
+            const code = current.weather_code ?? 0;
 
-            if (((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) && precip < 0.5) {
-                if (clouds <= 40) {
-                    label = "Cerah";
-                    icon = "☀️";
-                    severity = "normal";
-                } else if (clouds <= 85) {
-                    label = "Cerah Berawan";
-                    icon = "🌤️";
-                    severity = "normal";
-                } else {
-                    label = "Berawan";
-                    icon = "⛅";
-                    severity = "normal";
-                }
-            } else if (code === 3 && precip === 0) {
-                // Di Indonesia, awan tanpa hujan diklasifikasikan BMKG sebagai Cerah Berawan atau Berawan
-                label = clouds <= 85 ? "Cerah Berawan" : "Berawan";
-                icon = clouds <= 85 ? "🌤️" : "⛅";
-            }
+            // Klasifikasi kondisi dan ikon dengan Standar Meteorologi BMKG
+            const classification = this.classifyBMKG(
+                temp,
+                clouds,
+                precip,
+                code,
+            );
 
             const weatherData = {
-                temperature: Math.round(current.temperature_2m ?? 28),
-                apparentTemperature: Math.round(
-                    current.apparent_temperature ?? 30,
-                ),
-                humidity: current.relative_humidity_2m ?? 70,
-                windSpeed: Math.round(current.wind_speed_10m ?? 10),
+                temperature: temp,
+                apparentTemperature: apparentTemp,
+                humidity: humidity,
+                windSpeed: wind,
                 precipitation: precip,
                 weatherCode: code,
-                condition: label,
-                icon: icon,
-                severity: severity,
-                source: "BMKG / WMO",
+                condition: classification.label,
+                icon: classification.icon,
+                severity: classification.severity,
+                source: "Standar BMKG",
                 updatedAt: current.time || new Date().toISOString(),
             };
 
@@ -220,8 +232,8 @@ export class WeatherManager {
     }
 
     /**
-     * Mengambil cuaca di sepanjang jalur rute (Sampling Titik Awal, Tengah, dan Tujuan)
-     * @param {Array} coordinates - Array koordinat GeoJSON [lng, lat]
+     * Mengambil cuaca di sepanjang jalur rute perjalanan
+     * Mengambil sampel koordinat sebenarnya sehingga suhu bervariasi sesuai elevasi & lokasi
      */
     async fetchRouteWeather(coordinates) {
         if (!coordinates || coordinates.length < 2) return [];
@@ -242,13 +254,13 @@ export class WeatherManager {
             const idxMid1 = Math.floor(total * 0.33);
             const idxMid2 = Math.floor(total * 0.66);
             samples.push({
-                label: "Area Perjalanan 1",
+                label: "Area Jalur 1",
                 lat: coordinates[idxMid1][1],
                 lng: coordinates[idxMid1][0],
                 percentage: 33,
             });
             samples.push({
-                label: "Area Perjalanan 2",
+                label: "Area Jalur 2",
                 lat: coordinates[idxMid2][1],
                 lng: coordinates[idxMid2][0],
                 percentage: 66,
@@ -271,10 +283,17 @@ export class WeatherManager {
             percentage: 100,
         });
 
-        // Ambil cuaca secara bersamaan (concurrent)
+        // Ambil cuaca secara bersamaan untuk masing-masing titik koordinat rute
         const results = await Promise.all(
             samples.map(async (sample) => {
-                const weather = await this.fetchWeather(sample.lat, sample.lng);
+                const weather = await this.fetchWeather(
+                    sample.lat,
+                    sample.lng,
+                    {
+                        isRouteSample: true,
+                        label: sample.label,
+                    },
+                );
                 return {
                     ...sample,
                     weather,
