@@ -155,7 +155,7 @@ function setupLayerSwitcher(mapManager) {
             if (thumb) {
                 thumb.src =
                     layerKey === "satellite"
-                        ? "https://a.basemaps.cartocdn.com/rastertiles/voyager/13/6524/4260.png"
+                        ? "https://a.tile.openstreetmap.org/13/6524/4260.png"
                         : "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4260/6524";
                 const label = document.getElementById("current-layer-label");
                 if (label) {
@@ -572,7 +572,10 @@ function initLocation(mapManager, placesManager) {
         },
         (err) => {
             if (myLocationBtn) myLocationBtn.classList.remove("locating");
-            console.warn("Izin lokasi tidak diberikan atau tidak tersedia:", err);
-        }
+            console.warn(
+                "Izin lokasi tidak diberikan atau tidak tersedia:",
+                err,
+            );
+        },
     );
 }

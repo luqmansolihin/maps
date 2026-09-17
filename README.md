@@ -14,10 +14,10 @@ Aplikasi web peta interaktif mandiri dengan tampilan dan fitur modern menyerupai
     - Animasi transisi halus dan popup modern.
 
 2. **Pilihan Layer Peta (Layer Switcher di Kiri Bawah)**:
-    - 🗺️ **Jalan (Default)**: Tampilan jalan modern dan bersih dari CartoDB Voyager.
+    - 🗺️ **Jalan (Default)**: Tampilan jalan OpenStreetMap resmi yang tajam dan 100% bebas watermark.
     - 🛰️ **Satelit**: Foto citra satelit resolusi tinggi dari Esri World Imagery + label jalan.
-    - 🌙 **Mode Gelap (Dark Mode)**: Tampilan malam yang elegan dari CartoDB Dark Matter.
-    - ⛰️ **Topografi**: Tampilan kontur ketinggian dan alam dari OpenTopoMap.
+    - 🌙 **Mode Gelap (Dark Mode)**: Tampilan malam yang elegan menggunakan CSS Dark Filter native.
+    - ⛰️ **Topografi**: Tampilan kontur ketinggian dan alam dari Esri World Topo Map.
 
 3. **Pencarian Lokasi Cepat (Geocoding & Autocomplete)**:
     - Pencarian alamat, gedung, atau kota di seluruh dunia (didukung oleh Nominatim OpenStreetMap).

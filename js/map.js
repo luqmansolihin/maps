@@ -23,12 +23,12 @@ export class MapManager {
     init() {
         // Ambil lokasi terakhir yang tersimpan jika ada
         const savedLoc = Storage.getSettings().lastLocation;
-        const initialCenter = (savedLoc && savedLoc.lat && savedLoc.lng)
-            ? [savedLoc.lat, savedLoc.lng]
-            : CONFIG.DEFAULT_CENTER;
-        const initialZoom = (savedLoc && savedLoc.zoom)
-            ? savedLoc.zoom
-            : CONFIG.DEFAULT_ZOOM;
+        const initialCenter =
+            savedLoc && savedLoc.lat && savedLoc.lng
+                ? [savedLoc.lat, savedLoc.lng]
+                : CONFIG.DEFAULT_CENTER;
+        const initialZoom =
+            savedLoc && savedLoc.zoom ? savedLoc.zoom : CONFIG.DEFAULT_ZOOM;
 
         // Inisialisasi peta Leaflet dengan kontrol default dinonaktifkan untuk UI ala Google Maps
         this.map = L.map(this.containerId, {
@@ -78,6 +78,16 @@ export class MapManager {
                 maxZoom: labelConfig.maxZoom || 18,
                 pane: "overlayPane",
             }).addTo(this.map);
+        }
+
+        // Tambahkan / hapus kelas CSS untuk mode gelap
+        const mapEl = document.getElementById(this.containerId);
+        if (mapEl) {
+            if (layerKey === "dark") {
+                mapEl.classList.add("dark-tiles");
+            } else {
+                mapEl.classList.remove("dark-tiles");
+            }
         }
 
         this.currentLayerKey = layerKey;

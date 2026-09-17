@@ -8,17 +8,17 @@ export const CONFIG = {
     MIN_ZOOM: 3,
     MAX_ZOOM: 19,
 
-    // Penyedia Tile Peta
+    // Penyedia Tile Peta (100% Bebas Biaya & Tanpa Watermark)
     TILE_LAYERS: {
         streets: {
             name: "Jalan (Default)",
-            url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+            url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             attribution:
-                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19,
-            subdomains: "abcd",
+            subdomains: "abc",
             thumbnail:
-                "https://a.basemaps.cartocdn.com/rastertiles/voyager/13/6524/4260.png",
+                "https://a.tile.openstreetmap.org/13/6524/4260.png",
         },
         satellite: {
             name: "Satelit",
@@ -37,25 +37,18 @@ export const CONFIG = {
         },
         dark: {
             name: "Mode Gelap",
-            url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-            attribution:
-                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            maxZoom: 19,
-            subdomains: "abcd",
-        },
-        terrain: {
-            name: "Topografi",
-            url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
-            attribution:
-                'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
-            maxZoom: 17,
-        },
-        osm: {
-            name: "OpenStreetMap",
             url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             attribution:
                 '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19,
+            subdomains: "abc",
+        },
+        terrain: {
+            name: "Topografi",
+            url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
+            attribution:
+                "Tiles &copy; Esri &mdash; USGS, NOAA",
+            maxZoom: 18,
         },
     },
 
