@@ -72,7 +72,9 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         onError: (msg) => {
             routeSummary.style.display = "none";
-            const weatherBox = document.getElementById("route-weather-container");
+            const weatherBox = document.getElementById(
+                "route-weather-container",
+            );
             if (weatherBox) weatherBox.style.display = "none";
             routeError.textContent = msg;
             routeError.style.display = "block";

@@ -71,7 +71,7 @@ export class PlacesManager {
 
         try {
             const url = `${CONFIG.GEOCODING.REVERSE_URL}?format=json&addressdetails=1&lat=${lat}&lon=${lng}`;
-            
+
             // Ambil data geocoding dan cuaca secara bersamaan
             const [geoRes, weatherData] = await Promise.all([
                 fetch(url, {
@@ -81,7 +81,7 @@ export class PlacesManager {
                         "Accept-Language": "id,en",
                     },
                 }),
-                this.weatherManager.fetchWeather(lat, lng)
+                this.weatherManager.fetchWeather(lat, lng),
             ]);
 
             if (!geoRes.ok) throw new Error("Gagal memuat detail tempat");
@@ -114,20 +114,23 @@ export class PlacesManager {
                 lng,
                 details: addr,
                 bpsHierarchy,
-                weather: weatherData
+                weather: weatherData,
             };
 
             this.renderPlaceCard(this.currentPlace);
         } catch (err) {
             if (err.name !== "AbortError") {
-                const weatherData = await this.weatherManager.fetchWeather(lat, lng);
+                const weatherData = await this.weatherManager.fetchWeather(
+                    lat,
+                    lng,
+                );
                 this.currentPlace = {
                     name: knownName || "Titik Koordinat",
                     address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
                     lat,
                     lng,
                     bpsHierarchy: "Data wilayah belum tersedia",
-                    weather: weatherData
+                    weather: weatherData,
                 };
                 this.renderPlaceCard(this.currentPlace);
             }
@@ -143,7 +146,8 @@ export class PlacesManager {
         if (kec) parts.push(`<strong>Kec:</strong> ${kec}`);
         const kel = addr.village || addr.quarter || addr.neighbourhood;
         if (kel) parts.push(`<strong>Desa/Kel:</strong> ${kel}`);
-        if (addr.postcode) parts.push(`<strong>Kodepos:</strong> ${addr.postcode}`);
+        if (addr.postcode)
+            parts.push(`<strong>Kodepos:</strong> ${addr.postcode}`);
 
         return parts.length > 0 ? parts.join(" &bull; ") : "Indonesia";
     }
@@ -154,7 +158,7 @@ export class PlacesManager {
         this.elements.placeTitle.textContent = "Memuat informasi tempat...";
         this.elements.placeAddress.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         this.elements.placeCoords.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-        
+
         const weatherCond = document.getElementById("place-weather-cond");
         if (weatherCond) weatherCond.textContent = "Memuat cuaca BMKG...";
         const bpsEl = document.getElementById("place-bps-hierarchy");
@@ -177,7 +181,8 @@ export class PlacesManager {
 
         if (place.weather) {
             if (weatherIcon) weatherIcon.textContent = place.weather.icon;
-            if (weatherTemp) weatherTemp.textContent = `${place.weather.temperature}°C`;
+            if (weatherTemp)
+                weatherTemp.textContent = `${place.weather.temperature}°C`;
             if (weatherCond) weatherCond.textContent = place.weather.condition;
             if (weatherExtra) {
                 weatherExtra.innerHTML = `Terasa ${place.weather.apparentTemperature}°C &bull; 💧 ${place.weather.humidity}% &bull; 💨 ${place.weather.windSpeed} km/j`;

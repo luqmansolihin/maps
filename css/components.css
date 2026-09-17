@@ -1228,7 +1228,9 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     border: 1.5px solid #dadce0;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .route-weather-marker:hover {

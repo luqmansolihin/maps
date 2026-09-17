@@ -43,13 +43,13 @@ Aplikasi web peta interaktif mandiri dengan tampilan dan fitur modern menyerupai
 6. **Lokasi Saya (GPS / Geolocation)**:
     - Tombol pelacak lokasi saat ini dengan penanda titik biru berdenyut (_pulsing blue dot_) dan lingkaran estimasi akurasi.
 
-8. **Prakiraan Cuaca di Sepanjang Rute (Standar BMKG / WMO)**:
+7. **Prakiraan Cuaca di Sepanjang Rute (Standar BMKG / WMO)**:
     - Menghubungkan data cuaca real-time di sepanjang rute yang akan dilewati (Titik Awal, Area Perjalanan, dan Titik Tujuan).
     - Memantau suhu (°C), kondisi cuaca (Cerah, Berawan, Hujan, Badai), kelembapan (%), dan kecepatan angin (km/j).
-    - Menampilkan *Route Weather Timeline* di panel petunjuk arah serta penanda cuaca langsung di atas garis rute pada peta.
+    - Menampilkan _Route Weather Timeline_ di panel petunjuk arah serta penanda cuaca langsung di atas garis rute pada peta.
     - Banner peringatan dini otomatis jika terdapat area yang berpotensi hujan lebat atau badai petir.
 
-9. **Informasi Wilayah Administrasi BPS & Detail Lokasi**:
+8. **Informasi Wilayah Administrasi BPS & Detail Lokasi**:
     - Menampilkan informasi hierarki wilayah resmi standar BPS/Kemendagri (Provinsi, Kabupaten/Kota, Kecamatan, Desa/Kelurahan, Kode Pos) serta prakiraan cuaca real-time saat mengklik titik mana saja di peta.
 
 ---

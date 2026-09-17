@@ -135,14 +135,20 @@ export class RouteManager {
             // Ambil data cuaca di sepanjang rute perjalanan
             let routeWeather = [];
             try {
-                routeWeather = await this.weatherManager.fetchRouteWeather(route.geometry.coordinates);
+                routeWeather = await this.weatherManager.fetchRouteWeather(
+                    route.geometry.coordinates,
+                );
                 this.renderRouteWeatherMarkers(routeWeather);
             } catch (e) {
                 console.warn("Gagal memuat cuaca rute:", e);
             }
 
             if (this.callbacks.onSuccess) {
-                this.callbacks.onSuccess(route, this.transportMode, routeWeather);
+                this.callbacks.onSuccess(
+                    route,
+                    this.transportMode,
+                    routeWeather,
+                );
             }
         } catch (err) {
             console.error("Error kalkulasi rute:", err);
