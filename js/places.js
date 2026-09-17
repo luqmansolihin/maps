@@ -71,7 +71,7 @@ export class PlacesManager {
 
         try {
             const url = `${CONFIG.GEOCODING.REVERSE_URL}?format=json&addressdetails=1&lat=${lat}&lon=${lng}`;
-            
+
             const geoRes = await fetch(url, {
                 signal: this.abortController.signal,
                 headers: {
@@ -104,11 +104,15 @@ export class PlacesManager {
             const bpsHierarchy = this.formatBpsHierarchy(addr);
 
             // Ambil cuaca dengan konteks alamat dan nama tempat untuk mencocokkan stasiun BMKG
-            const weatherData = await this.weatherManager.fetchWeather(lat, lng, {
-                name: placeName,
-                address: data.display_name,
-                details: addr,
-            });
+            const weatherData = await this.weatherManager.fetchWeather(
+                lat,
+                lng,
+                {
+                    name: placeName,
+                    address: data.display_name,
+                    details: addr,
+                },
+            );
 
             this.currentPlace = {
                 name: placeName,
@@ -127,7 +131,7 @@ export class PlacesManager {
                 const weatherData = await this.weatherManager.fetchWeather(
                     lat,
                     lng,
-                    { name: knownName }
+                    { name: knownName },
                 );
                 this.currentPlace = {
                     name: knownName || "Titik Koordinat",
@@ -190,7 +194,9 @@ export class PlacesManager {
                 weatherTemp.textContent = `${place.weather.temperature}°C`;
             if (weatherCond) weatherCond.textContent = place.weather.condition;
             if (weatherExtra) {
-                const sourceBadge = place.weather.source ? ` &bull; 📡 ${place.weather.source}` : '';
+                const sourceBadge = place.weather.source
+                    ? ` &bull; 📡 ${place.weather.source}`
+                    : "";
                 weatherExtra.innerHTML = `Terasa ${place.weather.apparentTemperature}°C &bull; 💧 ${place.weather.humidity}% &bull; 💨 ${place.weather.windSpeed} km/j${sourceBadge}`;
             }
         } else {
