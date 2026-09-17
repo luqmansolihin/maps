@@ -68,6 +68,7 @@ export class MapManager {
         this.activeTileLayer = L.tileLayer(layerConfig.url, {
             attribution: layerConfig.attribution,
             maxZoom: layerConfig.maxZoom || 19,
+            maxNativeZoom: layerConfig.maxNativeZoom || layerConfig.maxZoom || 19,
             subdomains: layerConfig.subdomains || "abc",
         }).addTo(this.map);
 
@@ -75,7 +76,8 @@ export class MapManager {
         if (layerKey === "satellite") {
             const labelConfig = CONFIG.TILE_LAYERS.satelliteLabels;
             this.overlayLayers.satelliteLabels = L.tileLayer(labelConfig.url, {
-                maxZoom: labelConfig.maxZoom || 18,
+                maxZoom: labelConfig.maxZoom || 19,
+                maxNativeZoom: labelConfig.maxNativeZoom || 18,
                 pane: "overlayPane",
             }).addTo(this.map);
         }

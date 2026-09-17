@@ -16,16 +16,17 @@ export const CONFIG = {
             attribution:
                 '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19,
+            maxNativeZoom: 19,
             subdomains: "abc",
-            thumbnail:
-                "https://a.tile.openstreetmap.org/13/6524/4260.png",
+            thumbnail: "https://a.tile.openstreetmap.org/13/6524/4260.png",
         },
         satellite: {
             name: "Satelit",
             url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
             attribution:
                 "Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
-            maxZoom: 18,
+            maxZoom: 19,
+            maxNativeZoom: 18,
             thumbnail:
                 "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4260/6524",
         },
@@ -33,7 +34,8 @@ export const CONFIG = {
             name: "Label Satelit",
             url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
             attribution: "",
-            maxZoom: 18,
+            maxZoom: 19,
+            maxNativeZoom: 18,
         },
         dark: {
             name: "Mode Gelap",
@@ -41,14 +43,15 @@ export const CONFIG = {
             attribution:
                 '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
             maxZoom: 19,
+            maxNativeZoom: 19,
             subdomains: "abc",
         },
         terrain: {
             name: "Topografi",
             url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}",
-            attribution:
-                "Tiles &copy; Esri &mdash; USGS, NOAA",
-            maxZoom: 18,
+            attribution: "Tiles &copy; Esri &mdash; USGS, NOAA",
+            maxZoom: 19,
+            maxNativeZoom: 16, // Server Esri Topo hanya memiliki data hingga zoom 16, selebihnya Leaflet akan melakukan upscale otomatis
         },
     },
 

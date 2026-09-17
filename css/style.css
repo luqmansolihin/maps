@@ -152,7 +152,8 @@ button:active {
 }
 
 #map.dark-tiles .leaflet-tile {
-    filter: brightness(0.65) invert(1) contrast(1.5) hue-rotate(190deg) saturate(0.35) !important;
+    filter: brightness(0.65) invert(1) contrast(1.5) hue-rotate(190deg)
+        saturate(0.35) !important;
 }
 
 #map.dark-tiles .leaflet-control-attribution {
