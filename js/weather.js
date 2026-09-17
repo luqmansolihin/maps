@@ -79,9 +79,11 @@ export class WeatherManager {
                 weatherCode: bestItem.weather,
                 condition: desc,
                 icon: icon,
-                severity: desc.toLowerCase().includes("hujan") || desc.toLowerCase().includes("petir")
-                    ? "warning"
-                    : "normal",
+                severity:
+                    desc.toLowerCase().includes("hujan") ||
+                    desc.toLowerCase().includes("petir")
+                        ? "warning"
+                        : "normal",
                 source: "BMKG Resmi",
                 updatedAt: bestItem.local_datetime,
             };
@@ -104,20 +106,38 @@ export class WeatherManager {
             }
         }
 
-        // Cek jika wilayah ini adalah Kajoran Magelang atau memiliki kode adm4 BMKG
-        const isKajoran =
-            (context.name && context.name.toLowerCase().includes("kajoran")) ||
-            (context.address && context.address.toLowerCase().includes("kajoran")) ||
-            (Math.abs(lat - (-7.502)) < 0.08 && Math.abs(lng - 110.097) < 0.08);
+        // Deteksi apakah wilayah berada di cakupan stasiun BMKG resmi
+        const textToCheck = `${context.name || ""} ${context.address || ""} ${context.details?.county || ""} ${context.details?.town || ""} ${context.details?.city || ""}`.toLowerCase();
 
-        if (isKajoran || context.adm4) {
-            const admCode = context.adm4 || (isKajoran ? "33.08.12.2001" : null);
-            if (admCode) {
-                const bmkg = await this.fetchBMKGWeather(admCode);
-                if (bmkg) {
-                    this.cache.set(key, { timestamp: Date.now(), data: bmkg });
-                    return bmkg;
-                }
+        const isMagelangKajoran =
+            textToCheck.includes("kajoran") ||
+            textToCheck.includes("magelang") ||
+            (lat >= -7.70 && lat <= -7.30 && lng >= 110.00 && lng <= 110.40);
+
+        let admCode = context.adm4 || null;
+        if (!admCode) {
+            if (isMagelangKajoran) {
+                admCode = "33.08.12.2001";
+            } else if (textToCheck.includes("jakarta") || (lat >= -6.38 && lat <= -6.08 && lng >= 106.65 && lng <= 107.00)) {
+                admCode = "31.71.01.1001";
+            } else if (textToCheck.includes("bandung") || (lat >= -7.05 && lat <= -6.80 && lng >= 107.50 && lng <= 107.75)) {
+                admCode = "32.73.01.1001";
+            } else if (textToCheck.includes("semarang") || (lat >= -7.15 && lat <= -6.90 && lng >= 110.30 && lng <= 110.55)) {
+                admCode = "33.74.01.1001";
+            } else if (textToCheck.includes("yogyakarta") || textToCheck.includes("jogja") || (lat >= -7.90 && lat <= -7.70 && lng >= 110.30 && lng <= 110.45)) {
+                admCode = "34.71.01.1001";
+            } else if (textToCheck.includes("surabaya") || (lat >= -7.35 && lat <= -7.18 && lng >= 112.65 && lng <= 112.85)) {
+                admCode = "35.78.01.1001";
+            } else if (textToCheck.includes("denpasar") || textToCheck.includes("bali")) {
+                admCode = "51.71.01.1001";
+            }
+        }
+
+        if (admCode) {
+            const bmkg = await this.fetchBMKGWeather(admCode);
+            if (bmkg) {
+                this.cache.set(key, { timestamp: Date.now(), data: bmkg });
+                return bmkg;
             }
         }
 
@@ -148,7 +168,7 @@ export class WeatherManager {
                     label = "Cerah";
                     icon = "☀️";
                     severity = "normal";
-                } else if (clouds <= 80) {
+                } else if (clouds <= 85) {
                     label = "Cerah Berawan";
                     icon = "🌤️";
                     severity = "normal";
@@ -157,6 +177,10 @@ export class WeatherManager {
                     icon = "⛅";
                     severity = "normal";
                 }
+            } else if (code === 3 && clouds <= 85 && precip === 0) {
+                // Di Indonesia, awan sedang tanpa hujan diklasifikasikan BMKG sebagai Cerah Berawan
+                label = "Cerah Berawan";
+                icon = "🌤️";
             }
 
             const weatherData = {

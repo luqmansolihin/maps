@@ -71,40 +71,44 @@ export class PlacesManager {
 
         try {
             const url = `${CONFIG.GEOCODING.REVERSE_URL}?format=json&addressdetails=1&lat=${lat}&lon=${lng}`;
-
-            // Ambil data geocoding dan cuaca secara bersamaan
-            const [geoRes, weatherData] = await Promise.all([
-                fetch(url, {
-                    signal: this.abortController.signal,
-                    headers: {
-                        Accept: "application/json",
-                        "Accept-Language": "id,en",
-                    },
-                }),
-                this.weatherManager.fetchWeather(lat, lng),
-            ]);
+            
+            const geoRes = await fetch(url, {
+                signal: this.abortController.signal,
+                headers: {
+                    Accept: "application/json",
+                    "Accept-Language": "id,en",
+                },
+            });
 
             if (!geoRes.ok) throw new Error("Gagal memuat detail tempat");
             const data = await geoRes.json();
 
+            const addr = data.address || {};
             let placeName = knownName;
             if (!placeName) {
                 if (data.name) {
                     placeName = data.name;
                 } else if (data.address) {
                     placeName =
-                        data.address.road ||
-                        data.address.suburb ||
-                        data.address.neighbourhood ||
-                        data.address.city ||
+                        addr.road ||
+                        addr.suburb ||
+                        addr.town ||
+                        addr.neighbourhood ||
+                        addr.city ||
                         "Titik Terpilih";
                 } else {
                     placeName = "Titik Terpilih";
                 }
             }
 
-            const addr = data.address || {};
             const bpsHierarchy = this.formatBpsHierarchy(addr);
+
+            // Ambil cuaca dengan konteks alamat dan nama tempat untuk mencocokkan stasiun BMKG
+            const weatherData = await this.weatherManager.fetchWeather(lat, lng, {
+                name: placeName,
+                address: data.display_name,
+                details: addr,
+            });
 
             this.currentPlace = {
                 name: placeName,
@@ -123,6 +127,7 @@ export class PlacesManager {
                 const weatherData = await this.weatherManager.fetchWeather(
                     lat,
                     lng,
+                    { name: knownName }
                 );
                 this.currentPlace = {
                     name: knownName || "Titik Koordinat",
@@ -185,7 +190,8 @@ export class PlacesManager {
                 weatherTemp.textContent = `${place.weather.temperature}°C`;
             if (weatherCond) weatherCond.textContent = place.weather.condition;
             if (weatherExtra) {
-                weatherExtra.innerHTML = `Terasa ${place.weather.apparentTemperature}°C &bull; 💧 ${place.weather.humidity}% &bull; 💨 ${place.weather.windSpeed} km/j`;
+                const sourceBadge = place.weather.source ? ` &bull; 📡 ${place.weather.source}` : '';
+                weatherExtra.innerHTML = `Terasa ${place.weather.apparentTemperature}°C &bull; 💧 ${place.weather.humidity}% &bull; 💨 ${place.weather.windSpeed} km/j${sourceBadge}`;
             }
         } else {
             if (weatherCond) weatherCond.textContent = "Cuaca tidak tersedia";
