@@ -115,8 +115,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // 9. Sidebar Drawer & Tempat Favorit
     setupSidebarDrawer(mapManager, placesManager);
 
-    // 10. Cek Parameter URL (Deep linking / Share)
-    checkUrlParams(mapManager, placesManager);
+    // 10. Inisialisasi Lokasi (Deteksi Lokasi Pengguna atau Parameter URL)
+    initLocation(mapManager, placesManager);
 });
 
 /**
@@ -537,9 +537,12 @@ function renderSavedPlacesList() {
 }
 
 /**
- * Cek Parameter URL untuk Koordinat Bersama
+ * Inisialisasi Lokasi Awal Peta
+ * 1. Jika ada parameter URL (lat & lng), utamakan lokasi tersebut.
+ * 2. Jika tidak ada, otomatis deteksi posisi pengguna saat ini (Geolocation GPS),
+ *    pusatkan peta, dan simpan koordinatnya untuk sesi berikutnya.
  */
-function checkUrlParams(mapManager, placesManager) {
+function initLocation(mapManager, placesManager) {
     // Simpan reference global untuk kemudahan akses event
     window._mapManager = mapManager;
     window._placesManager = placesManager;
@@ -551,8 +554,25 @@ function checkUrlParams(mapManager, placesManager) {
         ? decodeURIComponent(urlParams.get("name"))
         : null;
 
+    // Jika pengguna membuka tautan dengan koordinat spesifik
     if (!isNaN(lat) && !isNaN(lng)) {
         mapManager.map.flyTo([lat, lng], 16, { duration: 1.2 });
         placesManager.fetchPlaceDetails(lat, lng, name);
+        return;
     }
+
+    // Jika tidak ada koordinat di URL, otomatis deteksi lokasi saat ini
+    const myLocationBtn = document.getElementById("my-location-btn");
+    if (myLocationBtn) myLocationBtn.classList.add("locating");
+
+    mapManager.locateUser(
+        () => {
+            if (myLocationBtn) myLocationBtn.classList.remove("locating");
+            placesManager.showToast("Peta disesuaikan ke lokasi Anda saat ini");
+        },
+        (err) => {
+            if (myLocationBtn) myLocationBtn.classList.remove("locating");
+            console.warn("Izin lokasi tidak diberikan atau tidak tersedia:", err);
+        }
+    );
 }

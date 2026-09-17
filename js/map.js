@@ -14,16 +14,26 @@ export class MapManager {
         this.clickMarker = null;
         this.userLocationMarker = null;
         this.userAccuracyCircle = null;
+        this.userCoordinates = null;
         this.routeMarkers = [];
         this.routePolyline = null;
         this.currentLayerKey = Storage.getSettings().activeLayer || "streets";
     }
 
     init() {
+        // Ambil lokasi terakhir yang tersimpan jika ada
+        const savedLoc = Storage.getSettings().lastLocation;
+        const initialCenter = (savedLoc && savedLoc.lat && savedLoc.lng)
+            ? [savedLoc.lat, savedLoc.lng]
+            : CONFIG.DEFAULT_CENTER;
+        const initialZoom = (savedLoc && savedLoc.zoom)
+            ? savedLoc.zoom
+            : CONFIG.DEFAULT_ZOOM;
+
         // Inisialisasi peta Leaflet dengan kontrol default dinonaktifkan untuk UI ala Google Maps
         this.map = L.map(this.containerId, {
-            center: CONFIG.DEFAULT_CENTER,
-            zoom: CONFIG.DEFAULT_ZOOM,
+            center: initialCenter,
+            zoom: initialZoom,
             minZoom: CONFIG.MIN_ZOOM,
             maxZoom: CONFIG.MAX_ZOOM,
             zoomControl: false, // Digantikan dengan kontrol kustom di kanan bawah
@@ -194,6 +204,13 @@ export class MapManager {
 
                 this.map.flyTo([latitude, longitude], 16, { duration: 1.2 });
 
+                this.userCoordinates = { latitude, longitude, accuracy };
+                Storage.saveSetting("lastLocation", {
+                    lat: latitude,
+                    lng: longitude,
+                    zoom: 16,
+                });
+
                 if (onSuccess) onSuccess({ latitude, longitude, accuracy });
             },
             (err) => {
@@ -214,8 +231,25 @@ export class MapManager {
     }
 
     resetView() {
-        this.map.flyTo(CONFIG.DEFAULT_CENTER, CONFIG.DEFAULT_ZOOM, {
-            duration: 1,
-        });
+        if (this.userCoordinates) {
+            this.map.flyTo(
+                [this.userCoordinates.latitude, this.userCoordinates.longitude],
+                16,
+                { duration: 1 },
+            );
+        } else {
+            const savedLoc = Storage.getSettings().lastLocation;
+            if (savedLoc && savedLoc.lat && savedLoc.lng) {
+                this.map.flyTo(
+                    [savedLoc.lat, savedLoc.lng],
+                    savedLoc.zoom || 16,
+                    { duration: 1 },
+                );
+            } else {
+                this.map.flyTo(CONFIG.DEFAULT_CENTER, CONFIG.DEFAULT_ZOOM, {
+                    duration: 1,
+                });
+            }
+        }
     }
 }
