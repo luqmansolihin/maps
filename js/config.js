@@ -69,4 +69,9 @@ export const CONFIG = {
         walking:
             "https://routing.openstreetmap.de/routed-foot/route/v1/driving",
     },
+
+    // Layanan Cuaca (Standar BMKG / WMO)
+    WEATHER: {
+        API_URL: "https://api.open-meteo.com/v1/forecast",
+    },
 };

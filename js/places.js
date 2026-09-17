@@ -3,12 +3,14 @@
  */
 import { CONFIG } from "./config.js";
 import { Storage } from "./storage.js";
+import { WeatherManager } from "./weather.js";
 
 export class PlacesManager {
     constructor(mapManager, uiElements = {}, callbacks = {}) {
         this.mapManager = mapManager;
         this.elements = uiElements;
         this.callbacks = callbacks;
+        this.weatherManager = new WeatherManager();
 
         this.currentPlace = null;
         this.abortController = null;
@@ -69,16 +71,21 @@ export class PlacesManager {
 
         try {
             const url = `${CONFIG.GEOCODING.REVERSE_URL}?format=json&addressdetails=1&lat=${lat}&lon=${lng}`;
-            const res = await fetch(url, {
-                signal: this.abortController.signal,
-                headers: {
-                    Accept: "application/json",
-                    "Accept-Language": "id,en",
-                },
-            });
+            
+            // Ambil data geocoding dan cuaca secara bersamaan
+            const [geoRes, weatherData] = await Promise.all([
+                fetch(url, {
+                    signal: this.abortController.signal,
+                    headers: {
+                        Accept: "application/json",
+                        "Accept-Language": "id,en",
+                    },
+                }),
+                this.weatherManager.fetchWeather(lat, lng)
+            ]);
 
-            if (!res.ok) throw new Error("Gagal memuat detail tempat");
-            const data = await res.json();
+            if (!geoRes.ok) throw new Error("Gagal memuat detail tempat");
+            const data = await geoRes.json();
 
             let placeName = knownName;
             if (!placeName) {
@@ -96,27 +103,49 @@ export class PlacesManager {
                 }
             }
 
+            const addr = data.address || {};
+            const bpsHierarchy = this.formatBpsHierarchy(addr);
+
             this.currentPlace = {
                 name: placeName,
                 address:
                     data.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
                 lat,
                 lng,
-                details: data.address || {},
+                details: addr,
+                bpsHierarchy,
+                weather: weatherData
             };
 
             this.renderPlaceCard(this.currentPlace);
         } catch (err) {
             if (err.name !== "AbortError") {
+                const weatherData = await this.weatherManager.fetchWeather(lat, lng);
                 this.currentPlace = {
                     name: knownName || "Titik Koordinat",
                     address: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
                     lat,
                     lng,
+                    bpsHierarchy: "Data wilayah belum tersedia",
+                    weather: weatherData
                 };
                 this.renderPlaceCard(this.currentPlace);
             }
         }
+    }
+
+    formatBpsHierarchy(addr) {
+        const parts = [];
+        if (addr.state) parts.push(`<strong>Prov:</strong> ${addr.state}`);
+        const kab = addr.city || addr.county || addr.municipality;
+        if (kab) parts.push(`<strong>Kab/Kota:</strong> ${kab}`);
+        const kec = addr.city_district || addr.suburb || addr.town;
+        if (kec) parts.push(`<strong>Kec:</strong> ${kec}`);
+        const kel = addr.village || addr.quarter || addr.neighbourhood;
+        if (kel) parts.push(`<strong>Desa/Kel:</strong> ${kel}`);
+        if (addr.postcode) parts.push(`<strong>Kodepos:</strong> ${addr.postcode}`);
+
+        return parts.length > 0 ? parts.join(" &bull; ") : "Indonesia";
     }
 
     showLoadingCard(lat, lng) {
@@ -125,6 +154,11 @@ export class PlacesManager {
         this.elements.placeTitle.textContent = "Memuat informasi tempat...";
         this.elements.placeAddress.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
         this.elements.placeCoords.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+        
+        const weatherCond = document.getElementById("place-weather-cond");
+        if (weatherCond) weatherCond.textContent = "Memuat cuaca BMKG...";
+        const bpsEl = document.getElementById("place-bps-hierarchy");
+        if (bpsEl) bpsEl.textContent = "Memuat data wilayah...";
     }
 
     renderPlaceCard(place) {
@@ -134,6 +168,29 @@ export class PlacesManager {
         this.elements.placeTitle.textContent = place.name;
         this.elements.placeAddress.textContent = place.address;
         this.elements.placeCoords.textContent = `${place.lat.toFixed(6)}, ${place.lng.toFixed(6)}`;
+
+        // Render data cuaca jika tersedia
+        const weatherIcon = document.getElementById("place-weather-icon");
+        const weatherTemp = document.getElementById("place-weather-temp");
+        const weatherCond = document.getElementById("place-weather-cond");
+        const weatherExtra = document.getElementById("place-weather-extra");
+
+        if (place.weather) {
+            if (weatherIcon) weatherIcon.textContent = place.weather.icon;
+            if (weatherTemp) weatherTemp.textContent = `${place.weather.temperature}°C`;
+            if (weatherCond) weatherCond.textContent = place.weather.condition;
+            if (weatherExtra) {
+                weatherExtra.innerHTML = `Terasa ${place.weather.apparentTemperature}°C &bull; 💧 ${place.weather.humidity}% &bull; 💨 ${place.weather.windSpeed} km/j`;
+            }
+        } else {
+            if (weatherCond) weatherCond.textContent = "Cuaca tidak tersedia";
+        }
+
+        // Render hierarki BPS
+        const bpsEl = document.getElementById("place-bps-hierarchy");
+        if (bpsEl) {
+            bpsEl.innerHTML = place.bpsHierarchy || "Wilayah Indonesia";
+        }
 
         // Update status tombol favorit
         const isFav = Storage.isFavorite(place.lat, place.lng);

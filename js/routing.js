@@ -2,11 +2,13 @@
  * Modul Petunjuk Arah & Rute (OSRM Routing Engine)
  */
 import { CONFIG } from "./config.js";
+import { WeatherManager } from "./weather.js";
 
 export class RouteManager {
     constructor(mapManager, uiCallbacks = {}) {
         this.mapManager = mapManager;
         this.callbacks = uiCallbacks;
+        this.weatherManager = new WeatherManager();
 
         this.origin = null; // { lat, lng, name }
         this.destination = null; // { lat, lng, name }
@@ -17,6 +19,7 @@ export class RouteManager {
         this.originMarker = null;
         this.destinationMarker = null;
         this.stepMarker = null;
+        this.weatherMarkers = [];
     }
 
     setOrigin(place) {
@@ -129,8 +132,17 @@ export class RouteManager {
             const route = data.routes[0];
             this.renderRoute(route);
 
+            // Ambil data cuaca di sepanjang rute perjalanan
+            let routeWeather = [];
+            try {
+                routeWeather = await this.weatherManager.fetchRouteWeather(route.geometry.coordinates);
+                this.renderRouteWeatherMarkers(routeWeather);
+            } catch (e) {
+                console.warn("Gagal memuat cuaca rute:", e);
+            }
+
             if (this.callbacks.onSuccess) {
-                this.callbacks.onSuccess(route, this.transportMode);
+                this.callbacks.onSuccess(route, this.transportMode, routeWeather);
             }
         } catch (err) {
             console.error("Error kalkulasi rute:", err);
@@ -234,6 +246,52 @@ export class RouteManager {
             this.routePolylineBorder = null;
         }
         this.clearStepHighlight();
+        this.clearWeatherMarkers();
+    }
+
+    renderRouteWeatherMarkers(weatherPoints) {
+        this.clearWeatherMarkers();
+        if (!weatherPoints || !weatherPoints.length) return;
+
+        weatherPoints.forEach((point) => {
+            if (!point.weather) return;
+            const w = point.weather;
+            const icon = L.divIcon({
+                className: "route-weather-marker-container",
+                html: `
+                    <div class="route-weather-marker severity-${w.severity}" title="${point.label}: ${w.condition} (${w.temperature}°C)">
+                        <span class="marker-weather-icon">${w.icon}</span>
+                        <span class="marker-weather-temp">${w.temperature}°</span>
+                    </div>
+                `,
+                iconSize: [46, 26],
+                iconAnchor: [23, 13],
+            });
+
+            const marker = L.marker([point.lat, point.lng], {
+                icon,
+                zIndexOffset: 750,
+            }).addTo(this.mapManager.map);
+
+            marker.bindPopup(`
+                <div class="weather-map-popup">
+                    <div class="popup-title"><strong>${point.label}</strong></div>
+                    <div class="popup-cond">${w.icon} ${w.condition} (${w.temperature}°C)</div>
+                    <div class="popup-meta">💧 Kelembapan: ${w.humidity}% &bull; 💨 Angin: ${w.windSpeed} km/j</div>
+                </div>
+            `);
+
+            this.weatherMarkers.push(marker);
+        });
+    }
+
+    clearWeatherMarkers() {
+        if (this.weatherMarkers && this.weatherMarkers.length) {
+            this.weatherMarkers.forEach((m) =>
+                this.mapManager.map.removeLayer(m),
+            );
+            this.weatherMarkers = [];
+        }
     }
 
     // --- Helper Format Jarak & Durasi ---

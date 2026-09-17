@@ -54,7 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 routeError.style.display = "none";
             }
         },
-        onSuccess: (route, mode) => {
+        onSuccess: (route, mode, routeWeather) => {
             routeError.style.display = "none";
             routeSummary.style.display = "block";
 
@@ -64,11 +64,16 @@ document.addEventListener("DOMContentLoaded", () => {
             document.getElementById("route-distance").textContent =
                 RouteManager.formatDistance(route.distance);
 
+            // Render cuaca di rute perjalanan (BMKG)
+            renderRouteWeatherUI(routeWeather);
+
             // Render daftar langkah navigasi
             renderRouteSteps(route);
         },
         onError: (msg) => {
             routeSummary.style.display = "none";
+            const weatherBox = document.getElementById("route-weather-container");
+            if (weatherBox) weatherBox.style.display = "none";
             routeError.textContent = msg;
             routeError.style.display = "block";
         },
@@ -221,6 +226,8 @@ function setupRoutePanelControls(routeManager, mapManager, placesManager) {
         originInput.value = "";
         destInput.value = "";
         document.getElementById("route-summary").style.display = "none";
+        const weatherBox = document.getElementById("route-weather-container");
+        if (weatherBox) weatherBox.style.display = "none";
     });
 
     swapBtn.addEventListener("click", () => {
@@ -397,6 +404,61 @@ function renderRouteSteps(route) {
 
         stepsList.appendChild(li);
     });
+}
+
+/**
+ * Render Widget Prakiraan Cuaca di Sepanjang Jalur Rute (Standar BMKG)
+ */
+function renderRouteWeatherUI(routeWeather) {
+    const container = document.getElementById("route-weather-container");
+    const timeline = document.getElementById("route-weather-timeline");
+    const alertEl = document.getElementById("route-weather-alert");
+
+    if (!container || !timeline) return;
+
+    if (!routeWeather || !routeWeather.length) {
+        container.style.display = "none";
+        return;
+    }
+
+    container.style.display = "block";
+    timeline.innerHTML = "";
+
+    let hasWarning = false;
+    let warnings = [];
+
+    routeWeather.forEach((point) => {
+        if (!point.weather) return;
+        const w = point.weather;
+
+        if (w.severity === "danger" || w.severity === "warning") {
+            hasWarning = true;
+            warnings.push(`${point.label} (${w.condition})`);
+        }
+
+        const item = document.createElement("div");
+        item.className = `weather-timeline-item severity-${w.severity}`;
+        item.innerHTML = `
+            <div class="timeline-point-name">${point.label}</div>
+            <div class="timeline-point-weather">
+                <span class="timeline-icon">${w.icon}</span>
+                <span class="timeline-temp">${w.temperature}°C</span>
+            </div>
+            <div class="timeline-desc">${w.condition}</div>
+            <div class="timeline-sub">💧 ${w.humidity}% &bull; 💨 ${w.windSpeed} km/j</div>
+        `;
+        timeline.appendChild(item);
+    });
+
+    if (hasWarning && alertEl) {
+        alertEl.style.display = "flex";
+        alertEl.innerHTML = `
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-text"><strong>Peringatan Cuaca BMKG:</strong> Potensi ${warnings.join(", ")} di jalur perjalanan Anda. Harap berhati-hati!</div>
+        `;
+    } else if (alertEl) {
+        alertEl.style.display = "none";
+    }
 }
 
 /**

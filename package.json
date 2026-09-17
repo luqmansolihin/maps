@@ -1,6 +1,7 @@
 {
     "name": "google-maps-clone",
     "version": "1.0.0",
+    "type": "module",
     "description": "Proyek Peta Interaktif Modern mirip Google Maps berbasis JavaScript",
     "scripts": {
         "dev": "vite",

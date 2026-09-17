@@ -68,7 +68,8 @@ export class MapManager {
         this.activeTileLayer = L.tileLayer(layerConfig.url, {
             attribution: layerConfig.attribution,
             maxZoom: layerConfig.maxZoom || 19,
-            maxNativeZoom: layerConfig.maxNativeZoom || layerConfig.maxZoom || 19,
+            maxNativeZoom:
+                layerConfig.maxNativeZoom || layerConfig.maxZoom || 19,
             subdomains: layerConfig.subdomains || "abc",
         }).addTo(this.map);
 
